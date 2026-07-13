@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -23,6 +23,15 @@
       </header>
 
       <div id="status" class="status">기상청 현재 실황을 불러오는 중입니다.</div>
+
+      <section id="regionPanel" class="region-panel" aria-live="polite">
+        <div>
+          <p class="panel-eyebrow">지도에서 지역을 선택하세요</p>
+          <h2 id="regionTitle">지역별 체감온도 현황</h2>
+        </div>
+        <div id="regionSummary" class="region-summary">서울, 경기, 인천 등 지도 안의 지역을 클릭하면 현재 체감온도와 시간대별 현황이 표시됩니다.</div>
+        <div id="regionForecast" class="forecast-grid"></div>
+      </section>
 
       <canvas id="poster" width="1200" height="1800" aria-label="폭염특보 및 체감온도 안내 포스터"></canvas>
     </section>
