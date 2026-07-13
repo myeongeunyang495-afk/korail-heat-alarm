@@ -1,4 +1,4 @@
-﻿const DETAIL_URL = "https://heat-safety-app.netlify.app/";
+const DETAIL_URL = "https://heat-safety-app.netlify.app/";
 const canvas = document.querySelector("#poster");
 const ctx = canvas.getContext("2d");
 const statusEl = document.querySelector("#status");
@@ -218,21 +218,35 @@ async function loadWeather() {
   statusEl.className = "status";
   statusEl.textContent = "기상청 현재 실황을 불러오는 중입니다.";
   refreshBtn.disabled = true;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 25000);
   try {
-    const response = await fetch("/.netlify/functions/weather", { cache: "no-store" });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "기상청 데이터를 불러오지 못했습니다.");
+    const response = await fetch("/.netlify/functions/weather", { cache: "no-store", signal: controller.signal });
+    const text = await response.text();
+    let data = null;
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(`서버 응답을 JSON으로 읽을 수 없습니다. 응답 앞부분: ${text.slice(0, 120)}`);
+      }
+    }
+    if (!response.ok) throw new Error(data?.error || `서버 오류 ${response.status}: 응답 내용이 비어 있습니다.`);
+    if (!data) throw new Error("서버 응답이 비어 있습니다. Netlify Function 실행 시간 초과 가능성이 큽니다.");
     drawPoster(data);
     statusEl.textContent = `${data.generatedAtText} 기준 · ${data.source}`;
   } catch (error) {
+    const message = error.name === "AbortError"
+      ? "기상청 데이터 조회가 25초를 넘겨 중단되었습니다. 잠시 후 새로고침하거나 Netlify Function 로그를 확인하세요."
+      : error.message;
     statusEl.className = "status error";
-    statusEl.textContent = error.message;
-    drawError(error.message);
+    statusEl.textContent = message;
+    drawError(message);
   } finally {
+    clearTimeout(timer);
     refreshBtn.disabled = false;
   }
 }
-
 function drawError(message) {
   ctx.clearRect(0, 0, W, H);
   ctx.fillStyle = "white";
