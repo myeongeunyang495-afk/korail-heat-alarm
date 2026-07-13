@@ -1,11 +1,11 @@
-﻿:root {
+:root {
   color-scheme: light;
   --bg: #edf4fb;
   --ink: #111827;
   --muted: #546179;
   --blue: #063f93;
   --red: #e00000;
-  --orange: #ff9800;
+  --green: #08733c;
 }
 
 * { box-sizing: border-box; }
@@ -29,29 +29,37 @@ body {
   gap: 16px;
 }
 
+.topbar,
+.region-panel,
+.status {
+  background: #fff;
+  border: 1px solid #d8e3f1;
+  border-radius: 8px;
+}
+
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
   padding: 18px 20px;
-  background: #fff;
-  border: 1px solid #d8e3f1;
-  border-radius: 8px;
 }
 
-.eyebrow {
+.eyebrow,
+.panel-eyebrow {
   margin: 0 0 4px;
   font-size: 14px;
   font-weight: 700;
   color: var(--blue);
 }
 
-h1 {
+h1, h2 {
   margin: 0;
-  font-size: clamp(24px, 3vw, 36px);
   letter-spacing: 0;
 }
+
+h1 { font-size: clamp(24px, 3vw, 36px); }
+h2 { font-size: 22px; }
 
 .actions {
   display: flex;
@@ -78,15 +86,12 @@ button,
 }
 
 .detail-link {
-  background: #08733c;
-  border-color: #08733c;
+  background: var(--green);
+  border-color: var(--green);
 }
 
 .status {
   padding: 12px 14px;
-  background: #fff;
-  border: 1px solid #d8e3f1;
-  border-radius: 8px;
   color: var(--muted);
   font-weight: 700;
 }
@@ -97,6 +102,48 @@ button,
   background: #fff4f1;
 }
 
+.region-panel {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(260px, 1fr) minmax(320px, 1.4fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.region-summary {
+  color: var(--muted);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.forecast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  gap: 6px;
+}
+
+.forecast-cell {
+  border: 1px solid #d8e3f1;
+  border-radius: 6px;
+  padding: 8px;
+  background: #f8fbff;
+  text-align: center;
+}
+
+.forecast-cell strong {
+  display: block;
+  color: var(--blue);
+  font-size: 13px;
+}
+
+.forecast-cell span {
+  display: block;
+  margin-top: 3px;
+  font-weight: 800;
+}
+
+.forecast-cell.hot span { color: var(--red); }
+
 canvas {
   width: min(100%, 900px);
   height: auto;
@@ -104,6 +151,11 @@ canvas {
   background: #fff;
   border: 1px solid #111;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .region-panel { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 760px) {
