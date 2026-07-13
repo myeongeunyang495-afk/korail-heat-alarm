@@ -1,4 +1,4 @@
-﻿const KMA_BASE_URL = "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0";
+const KMA_BASE_URL = "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0";
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 const REGIONS = [
@@ -81,24 +81,41 @@ function heatLevel(maxApparent) {
   return "none";
 }
 
-async function kmaRequest(endpoint, params) {
-  const serviceKey = process.env.KMA_SERVICE_KEY;
-  if (!serviceKey) throw new Error("Netlify 환경변수 KMA_SERVICE_KEY가 없습니다.");
+function serviceKey() {
+  const key = process.env.KMA_SERVICE_KEY || process.env.KMA_API_KEY || "";
+  if (!key.trim()) throw new Error("Netlify 환경변수 KMA_SERVICE_KEY가 없습니다.");
+  return key.trim();
+}
 
+async function kmaRequest(endpoint, params) {
   const url = new URL(`${KMA_BASE_URL}/${endpoint}`);
-  url.searchParams.set("serviceKey", serviceKey);
+  url.searchParams.set("serviceKey", serviceKey());
   url.searchParams.set("pageNo", "1");
   url.searchParams.set("numOfRows", "1000");
   url.searchParams.set("dataType", "JSON");
-  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, String(value));
+  Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, String(value)));
 
-  const response = await fetch(url, { headers: { accept: "application/json" } });
-  if (!response.ok) throw new Error(`기상청 API HTTP ${response.status}`);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  let response;
+  try {
+    response = await fetch(url, { headers: { accept: "application/json" }, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
 
-  const payload = await response.json();
+  const text = await response.text();
+  if (!response.ok) throw new Error(`기상청 API HTTP ${response.status}: ${text.slice(0, 160)}`);
+
+  let payload;
+  try {
+    payload = JSON.parse(text);
+  } catch {
+    throw new Error(`기상청 API가 JSON이 아닌 응답을 반환했습니다: ${text.slice(0, 160)}`);
+  }
+
   const header = payload?.response?.header;
   if (header?.resultCode !== "00") throw new Error(`기상청 API 오류 ${header?.resultCode}: ${header?.resultMsg}`);
-
   const items = payload?.response?.body?.items?.item;
   if (!items) throw new Error(`${endpoint} 응답에 관측/예보 항목이 없습니다.`);
   return Array.isArray(items) ? items : [items];
@@ -112,14 +129,10 @@ async function fetchCurrent(region, now) {
     nx: region.nx,
     ny: region.ny
   });
-
   const values = Object.fromEntries(
     items.filter((item) => ["T1H", "REH"].includes(item.category)).map((item) => [item.category, Number(item.obsrValue)])
   );
-  if (!Number.isFinite(values.T1H) || !Number.isFinite(values.REH)) {
-    throw new Error(`${region.name} 초단기실황에 T1H/REH가 없습니다.`);
-  }
-
+  if (!Number.isFinite(values.T1H) || !Number.isFinite(values.REH)) throw new Error(`${region.name} 초단기실황에 T1H/REH가 없습니다.`);
   return {
     source: "초단기실황",
     date: ymd(base),
@@ -139,14 +152,12 @@ async function fetchForecast(region, now) {
     nx: region.nx,
     ny: region.ny
   });
-
   const grouped = new Map();
   for (const item of items) {
     if (item.fcstDate !== today || !["TMP", "REH"].includes(item.category)) continue;
     if (!grouped.has(item.fcstTime)) grouped.set(item.fcstTime, {});
     grouped.get(item.fcstTime)[item.category] = Number(item.fcstValue);
   }
-
   const points = [...grouped.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .filter(([, values]) => Number.isFinite(values.TMP) && Number.isFinite(values.REH))
@@ -158,7 +169,6 @@ async function fetchForecast(region, now) {
       humidityPct: values.REH,
       apparentC: apparentTemperatureC(values.TMP, values.REH)
     }));
-
   if (!points.length) throw new Error(`${region.name} 오늘 단기예보에 TMP/REH가 없습니다.`);
   return points;
 }
@@ -170,20 +180,17 @@ function heatWindow(forecast) {
   return { from: over[0].time, to: over[over.length - 1].time, maxApparent };
 }
 
+async function buildRegion(region, now) {
+  const [current, forecast] = await Promise.all([fetchCurrent(region, now), fetchForecast(region, now)]);
+  const window = heatWindow(forecast);
+  return { ...region, current, forecast, ...window, level: heatLevel(window.maxApparent) };
+}
+
 async function buildPayload() {
   const now = kstNow();
-  const regions = [];
-
-  for (const region of REGIONS) {
-    const [current, forecast] = await Promise.all([fetchCurrent(region, now), fetchForecast(region, now)]);
-    const window = heatWindow(forecast);
-    regions.push({ ...region, current, forecast, ...window, level: heatLevel(window.maxApparent) });
-  }
-
+  const regions = await Promise.all(REGIONS.map((region) => buildRegion(region, now)));
   const map = Object.fromEntries(REGIONS.map((region) => [region.map, "none"]));
-  for (const region of regions) {
-    map[region.map] = region.level;
-  }
+  regions.forEach((region) => { map[region.map] = region.level; });
 
   return {
     generatedAt: now.toISOString(),
@@ -203,17 +210,14 @@ export async function handler() {
     const payload = await buildPayload();
     return {
       statusCode: 200,
-      headers: {
-        "content-type": "application/json; charset=utf-8",
-        "cache-control": "no-store"
-      },
+      headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
       body: JSON.stringify(payload)
     };
   } catch (error) {
     return {
       statusCode: 500,
       headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
-      body: JSON.stringify({ error: error.message })
+      body: JSON.stringify({ error: error?.message || String(error) })
     };
   }
 }
