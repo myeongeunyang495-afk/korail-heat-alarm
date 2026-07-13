@@ -12,11 +12,12 @@
     <section class="workspace">
       <header class="topbar">
         <div>
-          <p class="eyebrow">기상청 API 기반 자동 생성</p>
+          <p class="eyebrow">옥외작업 체감온도 자동 계산</p>
           <h1>폭염특보 및 체감온도 안내</h1>
         </div>
         <div class="actions">
-          <a class="detail-link" href="https://heat-safety-app.netlify.app/" target="_blank" rel="noreferrer">실시간 현황 보기</a>
+          <a class="detail-link" href="https://heat-safety-app.netlify.app/" target="_blank" rel="noreferrer">체감온도 자동계산기</a>
+          <button id="copyTextBtn" type="button">텍스트 복사</button>
           <button id="refreshBtn" type="button">데이터 새로고침</button>
           <button id="downloadBtn" type="button">PNG 저장</button>
         </div>
@@ -26,7 +27,7 @@
 
       <section id="regionPanel" class="region-panel" aria-live="polite">
         <div>
-          <p class="panel-eyebrow">지도에서 지역을 선택하세요</p>
+          <p class="panel-eyebrow">옥외작업 전 체감온도를 확인하세요</p>
           <h2 id="regionTitle">지역별 체감온도 현황</h2>
         </div>
         <div id="regionSummary" class="region-summary">서울, 경기, 인천 등 지도 안의 지역을 클릭하면 현재 체감온도와 시간대별 현황이 표시됩니다.</div>
