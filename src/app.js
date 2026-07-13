@@ -4,6 +4,7 @@ const ctx = canvas.getContext("2d");
 const statusEl = document.querySelector("#status");
 const refreshBtn = document.querySelector("#refreshBtn");
 const downloadBtn = document.querySelector("#downloadBtn");
+const copyTextBtn = document.querySelector("#copyTextBtn");
 const regionTitle = document.querySelector("#regionTitle");
 const regionSummary = document.querySelector("#regionSummary");
 const regionForecast = document.querySelector("#regionForecast");
@@ -21,26 +22,25 @@ const GRID = "#c9d6ea";
 
 let latestData = null;
 
-const MAP_OFFSET = { x: -70, y: -55 };
 const MAP_REGIONS = [
-  { key: "서울", label: "서울", stationNames: ["서울"], x: 315, y: 370, w: 74, h: 58 },
-  { key: "인천", label: "인천", stationNames: ["인천"], x: 245, y: 405, w: 74, h: 58 },
-  { key: "경기", label: "경기", stationNames: ["수원"], x: 330, y: 440, w: 92, h: 72 },
-  { key: "강원(영서)", label: "강원(영서)", stationNames: ["춘천"], x: 430, y: 360, w: 132, h: 72 },
-  { key: "강원(영동)", label: "강원(영동)", stationNames: ["강릉"], x: 560, y: 375, w: 132, h: 72 },
-  { key: "충남", label: "충남", stationNames: ["천안"], x: 270, y: 560, w: 110, h: 76 },
-  { key: "세종", label: "세종", stationNames: ["세종"], x: 372, y: 535, w: 78, h: 56 },
-  { key: "대전", label: "대전", stationNames: ["대전"], x: 395, y: 605, w: 84, h: 58 },
-  { key: "충북", label: "충북", stationNames: ["청주"], x: 492, y: 530, w: 112, h: 84 },
-  { key: "경북", label: "경북", stationNames: ["안동"], x: 625, y: 640, w: 132, h: 122 },
-  { key: "대구", label: "대구", stationNames: ["대구"], x: 585, y: 745, w: 88, h: 58 },
-  { key: "울산", label: "울산", stationNames: ["울산"], x: 705, y: 765, w: 88, h: 58 },
-  { key: "부산", label: "부산", stationNames: ["부산"], x: 675, y: 835, w: 88, h: 58 },
-  { key: "경남", label: "경남", stationNames: ["창원"], x: 535, y: 825, w: 140, h: 92 },
-  { key: "전북", label: "전북", stationNames: ["전주"], x: 370, y: 735, w: 126, h: 86 },
-  { key: "광주", label: "광주", stationNames: ["광주"], x: 335, y: 850, w: 86, h: 58 },
-  { key: "전남", label: "전남", stationNames: ["목포"], x: 350, y: 950, w: 150, h: 92 },
-  { key: "제주", label: "제주", stationNames: ["제주"], x: 152, y: 1055, w: 126, h: 58, island: true }
+  { key: "서울", label: "서울", stationNames: ["서울"], points: [[292, 382], [325, 360], [360, 374], [358, 414], [322, 434], [292, 416]] },
+  { key: "인천", label: "인천", stationNames: ["인천"], points: [[232, 400], [284, 372], [294, 420], [252, 462], [218, 444]] },
+  { key: "경기", label: "경기", stationNames: ["수원"], points: [[300, 322], [390, 320], [438, 390], [422, 494], [342, 535], [266, 490], [254, 414]] },
+  { key: "강원(영서)", label: "강원(영서)", stationNames: ["춘천"], points: [[392, 300], [520, 278], [594, 360], [542, 470], [430, 438], [438, 390]] },
+  { key: "강원(영동)", label: "강원(영동)", stationNames: ["강릉"], points: [[520, 278], [644, 318], [704, 452], [622, 535], [542, 470], [594, 360]] },
+  { key: "충남", label: "충남", stationNames: ["천안"], points: [[238, 522], [342, 535], [388, 616], [350, 706], [222, 692], [178, 606]] },
+  { key: "세종", label: "세종", stationNames: ["세종"], points: [[356, 548], [406, 548], [422, 594], [382, 622], [346, 594]] },
+  { key: "대전", label: "대전", stationNames: ["대전"], points: [[382, 622], [432, 624], [448, 676], [404, 710], [362, 682]] },
+  { key: "충북", label: "충북", stationNames: ["청주"], points: [[422, 494], [542, 470], [588, 592], [534, 704], [448, 676], [388, 616]] },
+  { key: "경북", label: "경북", stationNames: ["안동"], points: [[588, 592], [704, 452], [768, 618], [738, 822], [618, 846], [534, 704]] },
+  { key: "대구", label: "대구", stationNames: ["대구"], points: [[594, 724], [660, 712], [686, 770], [642, 820], [590, 790]] },
+  { key: "울산", label: "울산", stationNames: ["울산"], points: [[700, 792], [758, 788], [792, 850], [744, 900], [696, 862]] },
+  { key: "부산", label: "부산", stationNames: ["부산"], points: [[650, 884], [724, 888], [742, 948], [674, 990], [622, 944]] },
+  { key: "경남", label: "경남", stationNames: ["창원"], points: [[500, 788], [590, 790], [642, 820], [696, 862], [650, 984], [496, 990], [430, 900]] },
+  { key: "전북", label: "전북", stationNames: ["전주"], points: [[350, 706], [448, 676], [534, 704], [500, 788], [430, 900], [312, 870], [250, 784]] },
+  { key: "광주", label: "광주", stationNames: ["광주"], points: [[310, 870], [366, 856], [402, 902], [366, 950], [304, 928]] },
+  { key: "전남", label: "전남", stationNames: ["목포"], points: [[250, 784], [312, 870], [430, 900], [496, 990], [420, 1110], [236, 1100], [150, 978]] },
+  { key: "제주", label: "제주", stationNames: ["제주"], points: [[86, 1034], [174, 1008], [244, 1042], [218, 1090], [116, 1092]], island: true }
 ];
 
 function font(size, weight = 700) {
@@ -74,8 +74,7 @@ function centerText(text, x, y, w, h, size, color = BLACK, weight = 700, lineHei
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   lines.forEach((line, index) => {
-    const offset = (index - (lines.length - 1) / 2) * size * lineHeight;
-    ctx.fillText(line, x + w / 2, y + h / 2 + offset);
+    ctx.fillText(line, x + w / 2, y + h / 2 + (index - (lines.length - 1) / 2) * size * lineHeight);
   });
 }
 
@@ -87,31 +86,66 @@ function leftText(text, x, y, size, color = BLACK, weight = 700) {
   ctx.fillText(text, x, y);
 }
 
-function bullet(text, x, y, size = 24, color = BLACK) {
+function bullet(text, x, y, size = 22, color = BLACK) {
   leftText(`• ${text}`, x, y, size, color, 700);
 }
 
+function mapPoint(point) {
+  return { x: point[0] * 0.62 + 80, y: point[1] * 0.43 + 205 };
+}
+
+function regionCenter(region) {
+  const mapped = region.points.map(mapPoint);
+  return mapped.reduce((acc, point) => ({ x: acc.x + point.x / mapped.length, y: acc.y + point.y / mapped.length }), { x: 0, y: 0 });
+}
+
+function drawPolygon(points, fill, stroke = "white", lineWidth = 2) {
+  const mapped = points.map(mapPoint);
+  ctx.beginPath();
+  ctx.moveTo(mapped[0].x, mapped[0].y);
+  mapped.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = lineWidth;
+  ctx.stroke();
+}
+
+function pointInPolygon(point, polygon) {
+  const mapped = polygon.map(mapPoint);
+  let inside = false;
+  for (let i = 0, j = mapped.length - 1; i < mapped.length; j = i++) {
+    const xi = mapped[i].x;
+    const yi = mapped[i].y;
+    const xj = mapped[j].x;
+    const yj = mapped[j].y;
+    const intersect = yi > point.y !== yj > point.y && point.x < ((xj - xi) * (point.y - yi)) / (yj - yi) + xi;
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
 function drawSun() {
-  const sx = 1058;
+  const sx = 1062;
   const sy = 92;
   ctx.fillStyle = "#ffc21a";
   ctx.beginPath();
-  ctx.arc(sx, sy, 72, 0, Math.PI * 2);
+  ctx.arc(sx, sy, 66, 0, Math.PI * 2);
   ctx.fill();
   ctx.strokeStyle = "#f5a400";
   ctx.lineWidth = 6;
-  [[0, -105], [75, -75], [105, 0], [75, 75], [0, 105], [-75, 75], [-105, 0], [-75, -75]].forEach(([dx, dy]) => {
+  [[0, -96], [70, -70], [96, 0], [70, 70], [0, 96], [-70, 70], [-96, 0], [-70, -70]].forEach(([dx, dy]) => {
     ctx.beginPath();
-    ctx.moveTo(sx + dx * 0.74, sy + dy * 0.74);
+    ctx.moveTo(sx + dx * 0.72, sy + dy * 0.72);
     ctx.lineTo(sx + dx, sy + dy);
     ctx.stroke();
   });
-  roundRect(sx - 58, sy - 30, 50, 37, 10, "#222");
-  roundRect(sx + 8, sy - 30, 50, 37, 10, "#222");
+  roundRect(sx - 52, sy - 28, 46, 34, 9, "#222");
+  roundRect(sx + 6, sy - 28, 46, 34, 9, "#222");
   ctx.strokeStyle = BLACK;
   ctx.lineWidth = 5;
   ctx.beginPath();
-  ctx.arc(sx, sy + 8, 36, 0.2, Math.PI - 0.2);
+  ctx.arc(sx, sy + 7, 32, 0.2, Math.PI - 0.2);
   ctx.stroke();
 }
 
@@ -129,8 +163,8 @@ function drawHeader() {
   ctx.lineTo(66, 52);
   ctx.stroke();
   leftText("매일 오전 10시 발송", 84, 31, 30, "white");
-  centerText("폭염으로부터 건강을 지키세요!", 332, 14, 520, 58, 38, DARK_BLUE);
-  leftText("폭염특보 및 체감온도 안내", 74, 86, 84, RED);
+  centerText("폭염으로부터 건강을 지키세요!", 342, 16, 510, 54, 36, DARK_BLUE);
+  leftText("폭염특보 및 체감온도 안내", 74, 90, 76, RED);
   drawSun();
 }
 
@@ -141,10 +175,10 @@ function drawMap(data) {
   const h = 565;
   roundRect(x, y, w, h, 14, "white", "#b6c9e8");
   roundRect(x, y, w, 52, 12, BLUE);
-  centerText("24시간 내 폭염특보 예상 지역", x, y, w, 52, 36, "white");
+  centerText("24시간 내 폭염특보 예상 지역", x, y, w, 52, 34, "white");
 
   [["폭염경보", RED], ["폭염주의보", ORANGE], ["특보 없음", "#eeeeee"]].forEach(([label, color], i) => {
-    const yy = y + 86 + i * 42;
+    const yy = y + 85 + i * 42;
     ctx.fillStyle = color;
     ctx.fillRect(52, yy, 26, 24);
     ctx.strokeStyle = "#777";
@@ -153,26 +187,20 @@ function drawMap(data) {
   });
 
   ctx.save();
-  ctx.translate(MAP_OFFSET.x, MAP_OFFSET.y - 25);
+  ctx.beginPath();
+  ctx.rect(x + 8, y + 60, w - 16, h - 70);
+  ctx.clip();
   MAP_REGIONS.forEach((region) => {
     const level = data.map?.[region.key] || "none";
-    const fill = colorForLevel(level);
-    if (region.island) {
-      ctx.fillStyle = fill;
-      ctx.strokeStyle = "white";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.ellipse(region.x + region.w / 2, region.y + region.h / 2, region.w / 2, region.h / 2, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-    } else {
-      roundRect(region.x, region.y, region.w, region.h, 16, fill, "white", 3);
-    }
-    centerText(region.label, region.x, region.y, region.w, region.h, 23, level === "none" ? BLACK : "white");
+    drawPolygon(region.points, colorForLevel(level), "white", 2.5);
+  });
+  MAP_REGIONS.forEach((region) => {
+    const level = data.map?.[region.key] || "none";
+    const center = regionCenter(region);
+    centerText(region.label, center.x - 50, center.y - 15, 100, 30, 18, level === "none" ? BLACK : "white");
   });
   ctx.restore();
 }
-
 function drawTimeTable(data) {
   const x = 614;
   const y = 220;
@@ -180,7 +208,7 @@ function drawTimeTable(data) {
   const h = 565;
   roundRect(x, y, w, h, 14, "white", "#b6c9e8");
   roundRect(x, y, w, 52, 12, BLUE);
-  centerText("오늘 주요 지역 체감온도 31℃ 이상 예상 시간", x, y, w, 52, 28, "white");
+  centerText("오늘 주요 지역 체감온도 31℃ 이상 예상 시간", x, y, w, 52, 27, "white");
 
   const headerY = y + 52;
   const rowH = 57;
@@ -193,16 +221,16 @@ function drawTimeTable(data) {
   ctx.lineTo(x + 178, y + h - 45);
   ctx.stroke();
   centerText("지역", x, headerY, 178, 62, 28);
-  centerText("예상 시간 / 현재 / 최고", x + 178, headerY, w - 178, 62, 26);
+  centerText("예상 시간 / 현재 / 최고", x + 178, headerY, w - 178, 62, 25);
 
   let yy = headerY + 62;
   data.primaryRegions.slice(0, 7).forEach((region) => {
     ctx.strokeStyle = GRID;
     ctx.strokeRect(x, yy, w, rowH);
-    centerText(region.label, x, yy, 178, rowH, 28);
+    centerText(region.label, x, yy, 178, rowH, 27);
     const windowText = region.from ? `${region.from} ~ ${region.to}` : "미예상";
     const value = `${windowText} / ${region.current.apparentC.toFixed(1)}℃ / ${region.maxApparent.toFixed(1)}℃`;
-    centerText(value, x + 178, yy, w - 178, rowH, 22, region.from ? RED : BLACK);
+    centerText(value, x + 178, yy, w - 178, rowH, 21, region.from ? RED : BLACK);
     yy += rowH;
   });
   centerText("※ 기상 상황에 따라 변동될 수 있으며, 기온·습도 기반 계산값입니다.", x, y + h - 40, w, 34, 18);
@@ -251,14 +279,6 @@ function drawSafetyTable() {
   ctx.fillRect(x, yy, w, 110);
   ctx.strokeStyle = "#ff9f8e";
   ctx.strokeRect(x, yy, w, 110);
-  ctx.strokeStyle = RED;
-  ctx.lineWidth = 5;
-  ctx.beginPath();
-  ctx.moveTo(x + 175, yy + 22);
-  ctx.lineTo(x + 132, yy + 88);
-  ctx.lineTo(x + 218, yy + 88);
-  ctx.closePath();
-  ctx.stroke();
   centerText("!", x + 135, yy + 34, 80, 48, 36, RED);
   centerText("무더위 시간대 (14:00 ~ 17:00)에는\n불가피한 경우를 제외하고는 옥외작업을 중지해야 합니다!", x + 235, yy + 12, w - 260, 96, 29, RED);
 }
@@ -281,26 +301,14 @@ function drawMeasurePanel() {
     ctx.beginPath();
     ctx.arc(cx, y + 92, 25, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(cx, y + 92);
-    ctx.lineTo(cx, y + 76);
-    ctx.moveTo(cx, y + 92);
-    ctx.lineTo(cx + 13, y + 102);
-    ctx.stroke();
     centerText(time, cx - 42, y + 120, 84, 38, 28, GREEN);
   });
   leftText("매일 10시, 12시, 14시, 16시", x + 630, y + 78, 22);
   leftText("체감온도 측정", x + 630, y + 110, 22);
 
   roundRect(x + 870, y + 64, 254, 146, 8, "#f3fff7", GREEN);
-  centerText("실시간 현황\n자세히 보기", x + 870, y + 68, 254, 54, 26, GREEN);
+  centerText("체감온도\n자동계산기", x + 870, y + 68, 254, 54, 26, GREEN);
   centerText(DETAIL_URL.replace("https://", ""), x + 870, y + 184, 254, 24, 15, BLACK, 400);
-  if (window.QRCode) {
-    const qrCanvas = document.createElement("canvas");
-    QRCode.toCanvas(qrCanvas, DETAIL_URL, { width: 74, margin: 1, errorCorrectionLevel: "M" }, () => {
-      ctx.drawImage(qrCanvas, x + 960, y + 112, 74, 74);
-    });
-  }
 
   [
     "측정 장소 : 작업장 내 대표 지점(직사광선 피한 그늘에서 측정)",
@@ -375,13 +383,8 @@ function canvasPoint(event) {
 }
 
 function hitTestMap(point) {
-  return MAP_REGIONS.find((region) => {
-    const x = region.x + MAP_OFFSET.x;
-    const y = region.y + MAP_OFFSET.y - 25;
-    return point.x >= x && point.x <= x + region.w && point.y >= y && point.y <= y + region.h;
-  });
+  return MAP_REGIONS.find((region) => pointInPolygon(point, region.points));
 }
-
 canvas.addEventListener("click", (event) => {
   const hit = hitTestMap(canvasPoint(event));
   if (hit) showRegionDetail(hit);
@@ -438,6 +441,52 @@ function drawError(message) {
   centerText("Netlify 환경변수 KMA_SERVICE_KEY와 API 활용 승인을 확인하세요.", 120, 980, W - 240, 60, 27);
 }
 
+function regionShareLine(regionName, label) {
+  const region = latestData?.regions.find((item) => item.name === regionName || item.label === label || item.map === label);
+  if (!region) return null;
+  const windowText = region.from ? `${region.from}~${region.to}` : "31℃ 이상 미예상";
+  return {
+    sortValue: region.maxApparent,
+    text: `${label}: 현재 ${region.current.apparentC.toFixed(1)}℃, 최고 ${region.maxApparent.toFixed(1)}℃, 31℃ 이상 ${windowText}`
+  };
+}
+
+function buildCopyText() {
+  if (!latestData) return "기상청 데이터를 아직 불러오지 못했습니다.";
+  const lines = [
+    regionShareLine("서울", "서울"),
+    regionShareLine("수원", "경기"),
+    regionShareLine("인천", "인천")
+  ].filter(Boolean).sort((a, b) => b.sortValue - a.sortValue).map((item, index) => `${index + 1}. ${item.text}`);
+
+  return [
+    `[폭염특보 및 체감온도 안내]`,
+    `${latestData.generatedAtText} 기준`,
+    "",
+    `서울/경기/인천 체감온도 높은 지역 순`,
+    ...lines,
+    "",
+    `옥외작업 안전조치 사항`,
+    `- 물, 이온음료 등 수분을 자주 섭취하세요.`,
+    `- 시원한 곳에서 충분히 휴식하세요.`,
+    `- 무더위 시간대(14~17시) 야외활동과 옥외작업을 자제하세요.`,
+    `- 두통, 어지러움, 피로감이 있으면 즉시 작업을 중단하고 건강상태를 확인하세요.`,
+    "",
+    `체감온도 자동계산기: ${DETAIL_URL}`
+  ].join("\n");
+}
+
+async function copyHeatText() {
+  const text = buildCopyText();
+  try {
+    await navigator.clipboard.writeText(text);
+    statusEl.className = "status";
+    statusEl.textContent = "서울/경기/인천 체감온도 요약과 안전조치 사항을 복사했습니다. 카톡에 붙여넣어 공유하세요.";
+  } catch {
+    window.prompt("아래 내용을 복사해 카톡에 붙여넣으세요.", text);
+  }
+}
+copyTextBtn.addEventListener("click", copyHeatText);
 refreshBtn.addEventListener("click", loadWeather);
 downloadBtn.addEventListener("click", () => {
   const link = document.createElement("a");
