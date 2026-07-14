@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>지역별 체감온도 안내문 생성기</title>
+    <meta name="description" content="서울, 경기, 인천 구·시별 체감온도 안내문 자동 생성" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="panel">
+        <div class="header">
+          <div>
+            <p>기상청 현재 실황 API 기반</p>
+            <h1>지역별 체감온도 안내문</h1>
+          </div>
+          <div class="actions">
+            <button id="refresh" type="button">새로고침</button>
+            <button id="copy" type="button">텍스트 복사</button>
+          </div>
+        </div>
+        <div id="status" class="status">기상청 데이터를 불러오는 중입니다.</div>
+        <section class="selector-panel">
+          <h2>지역 및 구 선택</h2>
+          <div id="areaSelector" class="area-selector"></div>
+        </section>
+        <section>
+          <h2>현재 및 하루 최고 체감온도</h2>
+          <div id="summary" class="summary-grid"></div>
+        </section>
+        <section>
+          <h2>시간대별 체감온도 현황</h2>
+          <div id="hourly" class="hourly-grid"></div>
+        </section>
+        <section>
+          <h2>공유 문구</h2>
+          <textarea id="message" spellcheck="false" aria-label="공유할 체감온도 안내문"></textarea>
+        </section>
+        <div id="meta" class="meta"></div>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
