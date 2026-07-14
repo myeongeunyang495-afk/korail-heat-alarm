@@ -99,8 +99,16 @@ function severityLabel(value: number) {
   return "정상";
 }
 
+function signalClass(value: number) {
+  if (value >= 38) return "signal-deep-red";
+  if (value >= 35) return "signal-red";
+  if (value >= 33) return "signal-orange";
+  if (value >= 31) return "signal-yellow";
+  return "signal-normal";
+}
+
 function heatWindowText(region: RegionWeather) {
-  if (!region.from || !region.to) return "현 시각부터 12시간 내 31℃ 이상 체감온도 유지 전망 없음";
+  if (!region.from || !region.to) return "현 시각부터 12시간 내 31℃ 이상 체감온도 예상 없음";
   return `${region.from} ~ ${region.to}까지 31℃ 이상 체감온도 유지 전망`;
 }
 
@@ -111,7 +119,7 @@ function maxPoint(region: RegionWeather) {
 function buildMessage(data: WeatherPayload) {
   const regions = sortRegions(data.regions);
   const rangeText = data.rangeText || "현 시각부터 12시간";
-  const lines = ["<지역별 체감온도 안내>", `${data.generatedAtText} 기준`, `※ ${rangeText} 기준`, "", "<관내 체감온도 높은 순>"];
+  const lines = ["<지역별 체감온도 안내>", `${data.generatedAtText} 기준`, "", "<주요 관내 체감온도 현황>"];
   regions.forEach((region, index) => {
     const peak = maxPoint(region);
     lines.push(`${index + 1}. ${region.label}: 현재 ${formatTemp(region.current.apparentC)}, ${rangeText} 내 최고 ${formatTemp(region.maxApparent)}(${region.maxTime || peak.time})`);
@@ -174,7 +182,7 @@ function renderTables(data: WeatherPayload) {
     const level = severityClass(region.maxApparent);
     const active = region.id === activeRegionId ? " active" : "";
     return `<article class="summary-card ${level}${active}" data-region-id="${region.id}" tabindex="0" role="button" aria-label="${region.label} 시간대별 체감온도 보기">
-      <h3>${region.label} <span>${severityLabel(region.maxApparent)}</span></h3>
+      <h3><span class="region-name"><i class="signal-dot ${signalClass(region.current.apparentC)}" title="현재 체감온도 ${formatTemp(region.current.apparentC)}" aria-hidden="true"></i>${region.label}</span><span>${severityLabel(region.maxApparent)}</span></h3>
       <dl>
         <div><dt>현재 체감</dt><dd>${formatTemp(region.current.apparentC)}</dd></div>
         <div><dt>현재 기온</dt><dd>${formatTemp(region.current.temperatureC)}</dd></div>
@@ -201,6 +209,7 @@ function renderTables(data: WeatherPayload) {
       </div>
       <strong>최고 ${formatTemp(activeRegion.maxApparent)} <small>${activeRegion.maxTime || maxPoint(activeRegion).time}</small></strong>
     </div>
+    <div class="chart-axis-label">체감온도</div>
     <div class="bar-chart" style="--chart-min:${minValue}; --chart-max:${maxValue};">
       ${points.map((point) => {
         const height = Math.max(8, ((point.apparentC - minValue) / Math.max(1, maxValue - minValue)) * 170 + 8);
