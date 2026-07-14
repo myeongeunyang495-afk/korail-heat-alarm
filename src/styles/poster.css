@@ -86,7 +86,7 @@ textarea { width: 100%; min-height: 480px; resize: vertical; border: 1px solid #
 .chart-head small { display: block; color: #667085; font-size: 13px; text-align: right; }
 .bar-chart {
   min-width: 1080px;
-  height: 238px;
+  height: 248px;
   display: flex;
   align-items: end;
   gap: 12px;
@@ -99,13 +99,13 @@ textarea { width: 100%; min-height: 480px; resize: vertical; border: 1px solid #
   flex: 1;
   min-width: 72px;
   display: grid;
-  grid-template-rows: 18px 170px 24px 30px;
+  grid-template-rows: 16px 170px 20px 24px;
   justify-items: center;
   align-items: end;
   color: #334155;
   font-weight: 900;
 }
-.bar-value { font-size: 12px; align-self: start; white-space: nowrap; line-height: 1; }
+.bar-value { font-size: 13.5px; align-self: end; white-space: nowrap; line-height: 1; margin-bottom: 1px; }
 .bar-track {
   width: 100%;
   height: 170px;
@@ -123,8 +123,8 @@ textarea { width: 100%; min-height: 480px; resize: vertical; border: 1px solid #
 .bar-item.level-orange .bar-fill { background: #ff8a00; }
 .bar-item.level-red .bar-fill { background: #e60000; }
 .bar-item.level-deep-red .bar-fill { background: #8b0000; }
-.bar-time { font-size: 12px; white-space: nowrap; line-height: 1.1; }
-.bar-meta { color: #667085; font-size: 10px; font-weight: 800; white-space: nowrap; line-height: 1.15; }
+.bar-time { font-size: 11.5px; white-space: nowrap; line-height: 1; align-self: center; }
+.bar-meta { color: #667085; font-size: 9.5px; font-weight: 800; white-space: nowrap; line-height: 1.05; align-self: start; }
 .chart-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .chart-legend span { border-radius: 999px; padding: 6px 10px; font-size: 13px; font-weight: 900; }
 @media (max-width: 720px) {
@@ -132,8 +132,14 @@ textarea { width: 100%; min-height: 480px; resize: vertical; border: 1px solid #
   .chart-head { flex-direction: column; }
 }
 .chart-axis-label {
-  margin: 4px 0 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 8px 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef6ff;
   color: #052b63;
   font-size: 15px;
   font-weight: 950;
+  line-height: 1;
 }
