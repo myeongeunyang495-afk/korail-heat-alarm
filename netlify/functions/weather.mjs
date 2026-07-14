@@ -101,6 +101,10 @@ function displayDate(date) {
   return `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}. (${WEEKDAYS[date.getDay()]})`;
 }
 
+function forecastDateTime(fcstDate, fcstTime) {
+  return new Date(Number(fcstDate.slice(0, 4)), Number(fcstDate.slice(4, 6)) - 1, Number(fcstDate.slice(6, 8)), Number(fcstTime.slice(0, 2)), Number(fcstTime.slice(2, 4)), 0, 0);
+}
+
 function ultraCurrentBase(now) {
   const base = new Date(now);
   base.setMinutes(0, 0, 0);
@@ -185,34 +189,38 @@ async function fetchCurrent(area, now) {
 
 async function fetchForecast(area, now) {
   const base = vilageForecastBase(now);
-  const today = ymd(now);
+  const end = new Date(now.getTime() + 12 * 60 * 60 * 1000);
   const { nx, ny } = dfsGrid(area.lat, area.lon);
   const items = await kmaRequest("getVilageFcst", { base_date: ymd(base), base_time: hm(base), nx, ny });
   const grouped = new Map();
   for (const item of items) {
-    if (item.fcstDate !== today || !["TMP", "REH"].includes(item.category)) continue;
-    if (!grouped.has(item.fcstTime)) grouped.set(item.fcstTime, {});
-    grouped.get(item.fcstTime)[item.category] = Number(item.fcstValue);
+    if (!["TMP", "REH"].includes(item.category)) continue;
+    const pointDate = forecastDateTime(item.fcstDate, item.fcstTime);
+    if (pointDate < now || pointDate > end) continue;
+    const key = `${item.fcstDate}${item.fcstTime}`;
+    if (!grouped.has(key)) grouped.set(key, { date: item.fcstDate, time: item.fcstTime, pointDate });
+    grouped.get(key)[item.category] = Number(item.fcstValue);
   }
-  const points = [...grouped.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .filter(([, values]) => Number.isFinite(values.TMP) && Number.isFinite(values.REH))
-    .map(([time, values]) => ({ source: "단기예보", date: today, time: `${time.slice(0, 2)}:${time.slice(2)}`, temperatureC: values.TMP, humidityPct: values.REH, apparentC: apparentTemperatureC(values.TMP, values.REH) }));
-  if (!points.length) throw new Error(`${area.label} 오늘 단기예보 TMP/REH가 없습니다.`);
+  const points = [...grouped.values()]
+    .sort((a, b) => a.pointDate - b.pointDate)
+    .filter((values) => Number.isFinite(values.TMP) && Number.isFinite(values.REH))
+    .map((values) => ({ source: "단기예보", date: values.date, time: `${values.time.slice(0, 2)}:${values.time.slice(2)}`, temperatureC: values.TMP, humidityPct: values.REH, apparentC: apparentTemperatureC(values.TMP, values.REH) }));
+  if (!points.length) throw new Error(`${area.label} 현재 시각부터 12시간 내 단기예보 TMP/REH가 없습니다.`);
   return points;
 }
 
-function heatWindow(forecast) {
-  const over = forecast.filter((point) => point.apparentC >= 31);
-  const maxApparent = Math.max(...forecast.map((point) => point.apparentC));
-  if (!over.length) return { from: null, to: null, maxApparent };
-  return { from: over[0].time, to: over[over.length - 1].time, maxApparent };
+function forecastWindow(current, forecast) {
+  const range = [current, ...forecast];
+  const over = range.filter((point) => point.apparentC >= 31);
+  const maxPoint = range.reduce((best, point) => point.apparentC > best.apparentC ? point : best, range[0]);
+  if (!over.length) return { from: null, to: null, maxApparent: maxPoint.apparentC, maxTime: maxPoint.time };
+  return { from: over[0].time, to: over[over.length - 1].time, maxApparent: maxPoint.apparentC, maxTime: maxPoint.time };
 }
 
 async function buildArea(area, now) {
   const grid = dfsGrid(area.lat, area.lon);
   const [current, forecast] = await Promise.all([fetchCurrent(area, now), fetchForecast(area, now)]);
-  return { ...area, ...grid, current, forecast, ...heatWindow(forecast) };
+  return { ...area, ...grid, current, forecast, ...forecastWindow(current, forecast) };
 }
 
 function selectedAreas(url) {
@@ -229,6 +237,7 @@ async function buildPayload(event) {
     generatedAt: now.toISOString(),
     generatedAtText: `${displayDate(now)} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
     source: "기상청 현재 실황 및 단기예보 기반",
+    rangeText: "현 시각부터 12시간",
     areaGroups: AREA_GROUPS.map((group) => ({ id: group.id, label: group.label, areas: group.areas.map(([id, label]) => ({ id, label })) })),
     regions,
     primaryRegions: regions
