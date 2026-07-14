@@ -1,0 +1,23 @@
+{
+  "name": "korail-heatwave-poster",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc && vite build",
+    "export": "node scripts/export-poster.mjs"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "playwright": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "typescript": "latest",
+    "vite": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3"
+  }
+}

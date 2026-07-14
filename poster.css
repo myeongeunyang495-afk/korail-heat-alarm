@@ -1,0 +1,22 @@
+:root {
+  font-family: Pretendard, "Noto Sans KR", "Malgun Gothic", sans-serif;
+  color: #111827;
+  background: #eef4fb;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: linear-gradient(135deg, #eef7ff, #fff8e6); }
+.app { width: min(980px, 100%); margin: 0 auto; padding: 28px 16px; }
+.panel { background: #fff; border: 1px solid #d7e2ee; border-radius: 14px; box-shadow: 0 18px 48px rgba(15, 23, 42, .12); padding: 22px; }
+.header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.header p { margin: 0 0 5px; color: #0054a6; font-size: 14px; font-weight: 900; }
+h1 { margin: 0; font-size: clamp(28px, 4vw, 42px); letter-spacing: -0.02em; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+button { min-height: 44px; border: 0; border-radius: 8px; padding: 0 16px; background: #004ea2; color: #fff; font: inherit; font-weight: 900; cursor: pointer; }
+button:disabled { opacity: .55; cursor: wait; }
+#copy { background: #087443; }
+.status { margin: 12px 0; padding: 12px 14px; border-radius: 8px; background: #eef6ff; color: #0b4a8f; font-weight: 800; }
+.status.error { background: #fff4ed; color: #b42318; }
+textarea { width: 100%; min-height: 620px; resize: vertical; border: 1px solid #cbd7e5; border-radius: 10px; padding: 18px; font: 800 18px/1.65 "Noto Sans KR", "Malgun Gothic", monospace; color: #111827; background: #fbfdff; white-space: pre-wrap; }
+.meta { margin-top: 10px; color: #667085; font-size: 14px; font-weight: 800; }
+@media (max-width: 720px) { .header { align-items: stretch; flex-direction: column; } button { flex: 1; } textarea { font-size: 15px; min-height: 560px; } }
